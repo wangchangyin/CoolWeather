@@ -31,3 +31,4 @@ public class Province extends DataSupport {
         this.provinceCode = provinceCode;
     }
 }
+
