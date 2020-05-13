@@ -1,7 +1,11 @@
 package com.coolweather.android;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
@@ -9,6 +13,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -18,6 +23,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.coolweather.android.gson.Forecast;
 import com.coolweather.android.gson.Weather;
+import com.coolweather.android.service.AutoUpdateService;
 import com.coolweather.android.util.HttpUtil;
 import com.coolweather.android.util.Utility;
 
@@ -44,6 +50,13 @@ public class WeatherActivity extends AppCompatActivity {
     private TextView sportText;
 
     private ImageView bingPicImg;
+
+    public SwipeRefreshLayout swipeRefreshLayout;
+    private String weatherId;//用于下拉刷新重新访问API时需要的参数
+
+    public DrawerLayout drawerLayout;//侧边栏
+    private Button navButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,11 +87,16 @@ public class WeatherActivity extends AppCompatActivity {
 
         String bingPic = prefs.getString("bing_pic",null);
 
+        //初始化刷新
+        swipeRefreshLayout=findViewById(R.id.swipe_refresh);
+        //设置下拉颜色
+        swipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary);
         if(weatherString != null){
             Weather weather = Utility.handleWeatherResponse(weatherString);
+            weatherId=weather.basic.weatherId;
             showWeatherInfo(weather);
         }else{
-            String weatherId = getIntent().getStringExtra("weather_id");
+            weatherId = getIntent().getStringExtra("weather_id");
             weatherLayout.setVisibility(View.INVISIBLE);
             requestWeather(weatherId);
         }
@@ -89,6 +107,23 @@ public class WeatherActivity extends AppCompatActivity {
             loadBingPic();
         }
 
+        //刷新的监听事件
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                requestWeather(weatherId);
+            }
+        });
+
+        drawerLayout=findViewById(R.id.drawer_layout);
+        navButton=findViewById(R.id.nav_button);
+        navButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //打开侧边栏
+                drawerLayout.openDrawer(GravityCompat.START);
+            }
+        });
     }
     public  void requestWeather(final String weatherId){
         String weatherUrl = "http://guolin.tech/api/weather?cityid=" + weatherId + "&key=2af15800f52344a58c163fe1bf6b8f24";
@@ -100,6 +135,7 @@ public class WeatherActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         Toast.makeText(WeatherActivity.this,"获取天气信息失败",Toast.LENGTH_SHORT).show();
+                        swipeRefreshLayout.setRefreshing(false);
                     }
                 });
             }
@@ -119,7 +155,7 @@ public class WeatherActivity extends AppCompatActivity {
                         }else{
                             Toast.makeText(WeatherActivity.this, "获取天气信息失败", Toast.LENGTH_SHORT).show();
                         }
-
+                        swipeRefreshLayout.setRefreshing(false);//隐藏刷新
 
                     }
                 });
@@ -166,6 +202,9 @@ public class WeatherActivity extends AppCompatActivity {
         sportText.setText(sport);
 
         weatherLayout.setVisibility(View.VISIBLE);
+
+        Intent intent=new Intent(this, AutoUpdateService.class);
+        startService(intent);
     }
     private void loadBingPic(){
         String requestBingPic = "http://guolin.tech/api/bing_pic";
