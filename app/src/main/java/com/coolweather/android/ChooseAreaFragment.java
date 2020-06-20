@@ -20,6 +20,7 @@ import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 
 import com.coolweather.android.db.City;
+import com.coolweather.android.db.Collection;
 import com.coolweather.android.db.County;
 import com.coolweather.android.db.Province;
 import com.coolweather.android.util.HttpUtil;
@@ -90,6 +91,7 @@ public class ChooseAreaFragment extends Fragment {
                         queryCounties();
                     }else if (currentLevel == LEVEL_COUNTY){
                         String weatherId = countyList.get(position).getWeatherId();
+                        String countyName = countyList.get(position).getCountyName();
                         //如果时侧边栏访问
                         if(getActivity() instanceof  WeatherActivity){
                             //关闭侧边栏 开启刷新 重新访问API
@@ -97,9 +99,20 @@ public class ChooseAreaFragment extends Fragment {
                             activity.drawerLayout.closeDrawers();
                             activity.swipeRefreshLayout.setRefreshing(true);
                             activity.requestWeather(weatherId);
+                            activity.weatherId=weatherId;
                         }else if(getActivity() instanceof  MainActivity){
                             Intent intent = new Intent(getActivity(),WeatherActivity.class);
                             intent.putExtra("weather_id",weatherId);
+                            startActivity(intent);
+                            getActivity().finish();
+                        }else if(getActivity() instanceof AddActivity){
+                            //收藏城市
+                            List<Collection> all = DataSupport.findAll(Collection.class);
+                            Collection collection=new Collection();
+                            collection.setWeatherId(weatherId);
+                            collection.setCountyName(countyName);
+                            collection.save();//把当前城市添加到数据库中
+                            Intent intent=new Intent(getActivity(),CollectionActivity.class);
                             startActivity(intent);
                             getActivity().finish();
                         }

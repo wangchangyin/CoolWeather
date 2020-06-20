@@ -1,6 +1,8 @@
 package com.coolweather.android;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -11,7 +13,10 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -52,7 +57,7 @@ public class WeatherActivity extends AppCompatActivity {
     private ImageView bingPicImg;
 
     public SwipeRefreshLayout swipeRefreshLayout;
-    private String weatherId;//用于下拉刷新重新访问API时需要的参数
+    public String weatherId;//用于下拉刷新重新访问API时需要的参数
 
     public DrawerLayout drawerLayout;//侧边栏
     private Button navButton;
@@ -60,7 +65,6 @@ public class WeatherActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         if (Build.VERSION.SDK_INT >= 21){
             View decorView = getWindow().getDecorView();
             decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN|View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
@@ -91,14 +95,25 @@ public class WeatherActivity extends AppCompatActivity {
         swipeRefreshLayout=findViewById(R.id.swipe_refresh);
         //设置下拉颜色
         swipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary);
-        if(weatherString != null){
-            Weather weather = Utility.handleWeatherResponse(weatherString);
-            weatherId=weather.basic.weatherId;
-            showWeatherInfo(weather);
-        }else{
-            weatherId = getIntent().getStringExtra("weather_id");
+
+        final Intent intent = getIntent();
+        String weather1 = intent.getStringExtra("weatherId");
+        //判断是否是通过定位获取的
+        if(weather1!=null && !"".equals(weather1)){
             weatherLayout.setVisibility(View.INVISIBLE);
-            requestWeather(weatherId);
+            weatherId=weather1;//改变天气id 用于刷新
+            requestWeather(weather1);
+            Log.d("cccc",weather1);
+        }else{
+            if(weatherString != null){
+                Weather weather = Utility.handleWeatherResponse(weatherString);
+                weatherId=weather.basic.weatherId;
+                showWeatherInfo(weather);
+            }else{
+                weatherId = getIntent().getStringExtra("weather_id");
+                weatherLayout.setVisibility(View.INVISIBLE);
+                requestWeather(weatherId);
+            }
         }
 
         if (bingPic != null){
@@ -124,8 +139,29 @@ public class WeatherActivity extends AppCompatActivity {
                 drawerLayout.openDrawer(GravityCompat.START);
             }
         });
+
+        //打开定位
+        Button title_local=findViewById(R.id.title_local);
+        title_local.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent=new Intent(WeatherActivity.this,LocationMapActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        //打开收藏城市
+        Button title_collection=findViewById(R.id.title_collection);
+        title_collection.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent1=new Intent(WeatherActivity.this,CollectionActivity.class);
+                startActivity(intent1);
+            }
+        });
     }
-    public  void requestWeather(final String weatherId){
+
+    public void requestWeather(final String weatherId){
         String weatherUrl = "http://guolin.tech/api/weather?cityid=" + weatherId + "&key=2af15800f52344a58c163fe1bf6b8f24";
         HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
             @Override
@@ -169,7 +205,7 @@ public class WeatherActivity extends AppCompatActivity {
         String degree = weather.now.temperature + "℃";
         String weatherInfo = weather.now.more.info;
         titleCity.setText(cityName);
-        titleUpdateTime.setText(updateTime);
+        titleUpdateTime.setText("更新时间:"+updateTime);
         degreeText.setText(degree);
         weatherInfoText.setText(weatherInfo);
         forecastLayout.removeAllViews();

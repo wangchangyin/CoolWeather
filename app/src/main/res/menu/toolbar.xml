@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <!--app:showAsAction="always"设置显示的位置
+    always在toolbar中显示
+    ifRoom 看屏幕是否足够
+    never显示图标
+.-->
+    <item
+        android:icon="@drawable/dingwei"
+        android:id="@+id/dingwei"
+        app:showAsAction="ifRoom"
+        android:title="定位" />
+    <item
+        android:icon="@drawable/collection"
+        android:id="@+id/collection"
+        app:showAsAction="never"
+        android:title="收藏城市" />
+</menu>

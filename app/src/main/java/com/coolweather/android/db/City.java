@@ -8,6 +8,15 @@ public class City extends DataSupport {
     private int cityCode;
     private int provinceId;
 
+    @Override
+    public String toString() {
+        return "City{" +
+                "id=" + id +
+                ", cityName='" + cityName + '\'' +
+                ", cityCode=" + cityCode +
+                ", provinceId=" + provinceId +
+                '}';
+    }
 
     public int getProvinceId() {
         return provinceId;
